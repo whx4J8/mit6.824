@@ -1,0 +1,10 @@
+/bin
+/pkg
+.classpath
+.settings
+.project
+*.iml
+.idea
+.idea
+/libraries
+/dictionaries

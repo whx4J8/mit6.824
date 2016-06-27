@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;mit6.824distribute&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../go_learn/cgss/src/main" />
+    </CLASSES>
+    <SOURCES />
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
