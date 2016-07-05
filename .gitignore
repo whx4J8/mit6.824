@@ -5,6 +5,5 @@
 .project
 *.iml
 .idea
-.idea
 /libraries
 /dictionaries
