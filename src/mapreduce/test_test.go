@@ -38,7 +38,7 @@ func ReduceFunc(key string, values []string) string {
 	for _, e := range values {
 		debug("Reduce %s %v\n", key, e)
 	}
-	return ""
+	return key
 }
 
 // Checks input file agaist output file: each input number should show up
@@ -148,7 +148,7 @@ func cleanup(mr *Master) {
 func TestSequentialSingle(t *testing.T) {
 
 	mr := Sequential("test", makeInputs(1), 1, MapFunc, ReduceFunc)
-	mr.Wait()	//等待任务执行
+	mr.Wait()
 	check(t, mr.files)
 	checkWorker(t, mr.stats)
 	cleanup(mr)

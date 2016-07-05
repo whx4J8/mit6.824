@@ -57,7 +57,6 @@ func Sequential(jobName string, files []string, nreduce int,
 	reduceF func(string, []string) string,
 ) (mr *Master) {
 
-	fmt.Println()
 	mr = newMaster("master")
 	go mr.run(jobName, files, nreduce, func(phase jobPhase) {
 		switch phase {
