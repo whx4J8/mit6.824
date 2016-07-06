@@ -46,29 +46,6 @@ func doMap(
 	keyValues := mapF(inFile,fileString)
 
 	serializingToDisk(keyValues,mapTaskNumber,nReduce,jobName)
-	//allKeyValues := make([]KeyValue,0)
-	//file,err := os.Open(inFile)
-	//defer file.Close()
-	//if err != nil {
-	//	fmt.Println("open file error",err)
-	//	return
-	//}
-	//
-	//buf := bufio.NewReader(file)
-	//for i:=0 ; ; i++ {
-	//	line,err := buf.ReadString('\n')
-	//	if err != nil {
-	//		if err == io.EOF {
-	//			break
-	//		}
-	//		fmt.Println("read line from file error",err)
-	//	}
-	//
-	//	keyValues := mapF(inFile,line)
-	//	allKeyValues = append(allKeyValues,keyValues...)
-	//}
-	//
-	//saveToDisk(inFile,allKeyValues)
 
 	// TODO:
 	// You will need to write this function.
@@ -139,39 +116,6 @@ func ifExistRemoveFile(filename string) error{
 			return err
 		}
 	}
-	return nil
-}
-
-/**
-	保存到硬盘
- */
-func saveToDisk(inFile string,keyValues []KeyValue) error{
-
-	filename := "data/intermediate_datasets"
-	err := ifExistRemoveFile(filename)
-	if err != nil {
-		fmt.Println("remove file error")
-		return err
-	}
-
-	file,err :=createOrOpenFile(filename)
-	if err != nil {
-		fmt.Println("file create or open file error")
-		return err
-	}
-
-	defer file.Close()
-
-	for i,v := range keyValues {
-		if i%10 == 0 {
-			file.WriteString(v.Key + ",")
-			file.WriteString(v.Value + ".\n")
-		}else{
-			file.WriteString(v.Key + ",")
-			file.WriteString(v.Value + ".")
-		}
-	}
-
 	return nil
 }
 
