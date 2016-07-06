@@ -17,20 +17,18 @@ func doReduce(
 	reduceF func(key string, values []string) string,
 ) {
 
-
 	partFileNames := make([]string,0)
 	for i:=0 ; i < nMap; i++ {
 		partFileName := reduceName(jobName,i,reduceTaskNumber)
 		partFileNames = append(partFileNames,partFileName)
 	}
 
-
 	kvs := mergeWithPartFile(partFileNames)
 	outKeyValues := make([]KeyValue,0)
 
 	for k,v := range kvs {
-		outkey := reduceF(k,v)
-		outKeyValue := &KeyValue{Key:outkey}
+		outValue := reduceF(k,v)
+		outKeyValue := &KeyValue{Key:k,Value:outValue}
 		outKeyValues = append(outKeyValues,*outKeyValue)
 	}
 
@@ -77,6 +75,15 @@ func writePartOut2Disk(kvs []KeyValue,fileName string ){
 	}
 
 	defer file.Close()
+	//for i,v := range kvs{
+	//	var line string
+	//	if i != len(kvs)-1 {
+	//		line = v.Key + ": " + v.Value + "\n"
+	//	} else {
+	//		line = v.Key + ": " + v.Value
+	//	}
+	//	file.WriteString(line)
+	//}
 
 	enc := json.NewEncoder(file)
 	for _,kv := range kvs {
