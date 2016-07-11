@@ -14,6 +14,8 @@ import (
 // key/value pairs, each represented by a mapreduce.KeyValue.
 func mapF(document string, value string) (res []mapreduce.KeyValue) {
 
+	value = strings.Replace(value,"\""," ",-1)
+
 	words := strings.Fields(value)
 	for _,w := range words {
 		kv := &mapreduce.KeyValue{w,""}

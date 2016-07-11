@@ -76,35 +76,53 @@ func doMap(
 }
 
 
-func serializingToDisk(keyValues []KeyValue,mapTaskNumber,partition int,jobName string){
+func serializingToDisk(keyValues []KeyValue,mapTaskNumber,nReduce int,jobName string){
 
-	partLength := len(keyValues)/partition
-	for j := 0; j < partition; j++ {
-		partKeyValues := keyValues[(0+j)*partLength:(1+j)*partLength]
-		partFileName := reduceName(jobName, mapTaskNumber, j)
-		serializingToDisk0(partFileName,partKeyValues)
-	}
-}
+	for i := 0; i<nReduce; i++ {
 
-func serializingToDisk0(fileName string,KeyValues []KeyValue){
-
-	ifExistRemoveFile(fileName)
-	file,err := createOrOpenFile(fileName)
-	if err != nil {
-		fmt.Println("open file error",err)
-		return
-	}
-	defer file.Close()
-
-	enc := json.NewEncoder(file)
-	for _,kv := range KeyValues {
-		err := enc.Encode(&kv)
+		fileName := reduceName(jobName, mapTaskNumber, i)
+		ifExistRemoveFile(fileName)
+		file,err := createOrOpenFile(fileName)
 		if err != nil {
-			fmt.Println("serializing data error",err)
+			fmt.Println("open file error",err)
 			return
 		}
+		defer file.Close()
+
+		enc := json.NewEncoder(file)
+		for _,v := range keyValues {
+			kv := v
+			if iHash(kv.Key) % uint32(nReduce) == uint32(i) {
+				err := enc.Encode(&kv)
+				if err != nil {
+					fmt.Println("doMap : marshall ",err)
+				}
+			}
+		}
+		fmt.Println("doMap : complete write out key values to file " + fileName)
 	}
+
 }
+
+//func serializingToDisk0(fileName string,KeyValues []KeyValue){
+//
+//	ifExistRemoveFile(fileName)
+//	file,err := createOrOpenFile(fileName)
+//	if err != nil {
+//		fmt.Println("open file error",err)
+//		return
+//	}
+//	defer file.Close()
+//
+//	enc := json.NewEncoder(file)
+//	for _,kv := range KeyValues {
+//		err := enc.Encode(&kv)
+//		if err != nil {
+//			fmt.Println("serializing data error",err)
+//			return
+//		}
+//	}
+//}
 
 /**
 	如果存在则删除文件
