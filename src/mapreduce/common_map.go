@@ -78,6 +78,7 @@ func doMap(
 
 func serializingToDisk(keyValues []KeyValue,mapTaskNumber,nReduce int,jobName string){
 
+	fileNames := make([]string,0)
 	for i := 0; i<nReduce; i++ {
 
 		fileName := reduceName(jobName, mapTaskNumber, i)
@@ -99,8 +100,9 @@ func serializingToDisk(keyValues []KeyValue,mapTaskNumber,nReduce int,jobName st
 				}
 			}
 		}
-		fmt.Println("doMap : complete write out key values to file " + fileName)
+		fileNames = append(fileNames,fileName)
 	}
+	//fmt.Println("doMap : complete write out key values to file " , fileNames)
 
 }
 

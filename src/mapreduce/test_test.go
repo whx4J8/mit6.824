@@ -17,6 +17,9 @@ const (
 	nNumber = 100000
 	nMap    = 100
 	nReduce = 50
+	//test
+	//nMap    = 3
+	//nReduce = 1
 )
 
 // Create input file with N numbers
@@ -117,6 +120,13 @@ func makeInputs(num int) []string {
 		file.Close()
 	}
 	return names
+
+	//test
+	//var names []string
+	//for f := 0 ; f < num ; f++ {
+	//	names = append(names, fmt.Sprintf("824-mrinput-%d.txt", f))
+	//}
+	//return names
 }
 
 // Cook up a unique-ish UNIX-domain socket name
@@ -212,3 +222,68 @@ func TestManyFailures(t *testing.T) {
 }
 
 
+//func Test(t *testing.T){
+//
+//	event := make(chan string)
+//
+//	for i:=0;i<2 ;i++  {
+//		go func(num int) {
+//			fmt.Println("thread ready num " , num)
+//			<- event	//事件只会通知一个
+//			fmt.Println("handle event thread num " , num)
+//		}(i)
+//	}
+//
+//	time.Sleep(time.Second * 2)
+//
+//	event <- "event"
+//
+//}
+
+
+//func Test2(t *testing.T){
+//
+//	event := make(chan string)
+//	event2 := make(chan string)
+//
+//
+//	for i:=0;i<2 ;i++  {
+//		go func(num int) {
+//			fmt.Println("thread ready num " , num)
+//			event <- "test"
+//			event2 <- "test2"
+//		}(i)
+//	}
+//
+//	//time.Sleep(time.Second * 2)
+//	//
+//	//for i:=0;i<2 ;i++  {
+//	//	<- event
+//	//	fmt.Println("handle event")
+//	//}
+//	//
+//	//for i:=0;i<2 ;i++  {
+//	//	<- event2
+//	//	fmt.Println("handle event2")
+//	//}
+//
+//	//callback := new(Callback)
+//	//callback.name = "keng"
+//	//callback.callbackChannel = make(chan string)
+//	event3 := make(chan string)
+//	//fmt.Println(callback.callbackChannel)
+//
+//	select {
+//	case event3 <- "done":
+//		fmt.Println("notify callback done event")
+//	default :
+//		fmt.Println("no notify callback done event")
+//	}
+//
+//	//fmt.Println("1")
+//	//callback.callbackChannel <- "wirte"
+//	//fmt.Println("2")
+//	//callback.callbackChannel <- "wirte"
+//	//fmt.Println("3")
+//
+//}
