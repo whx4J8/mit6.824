@@ -48,6 +48,9 @@ func (mr *Master) schedule(phase jobPhase) {
 		<- workdone
 	}
 
+	mr.registerChannel <- "close"					//关闭监听注册事件线程
+	faildone <- -1							//关闭监听失败事件线程
+
 	// All ntasks tasks have to be scheduled on workers, and only once all of
 	// them have been completed successfully should the function return.
 	// Remember that workers may fail, and that any given worker may finish
@@ -67,6 +70,9 @@ func handleFailTaskEvent(mr *Master,
 	go func(){
 		for true {
 			failTaskIndex := <-faildone
+			if failTaskIndex == -1{
+				break;
+			}
 			go doTask(failTaskIndex,faildone,workdone,phase,mr,nios,callback)
 		}
 	}()
@@ -195,7 +201,11 @@ func handleRegisterEvent(mr *Master,callback *Callback){
 
 	go func(mr *Master){
 		for true{
-			<- mr.registerChannel				//wait 新的注册事件
+			event := <- mr.registerChannel				//wait 新的注册事件
+			if event == "close" {
+				break;
+			}
+
 			mr.Lock()
 			mr.stats = append(mr.stats,0)			//初始化可用状态
 			callback.callbackChannel <- "register"		//通知callback
