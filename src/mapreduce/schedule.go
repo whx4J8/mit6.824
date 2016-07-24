@@ -34,55 +34,17 @@ func (mr *Master) schedule(phase jobPhase) {
 	}
 
 	workdone := make(chan string)
+	faildone := make(chan int,100)
 
 	handleRegisterEvent(mr, callback)	//单独handle注册事件
+	handleFailTaskEvent(mr,faildone,workdone,phase,nios,callback)	//捕捉worker执行失败的事件
 
 	for i:=0 ; i<ntasks ; i++ {					//先分配map任务给当前空闲的worker
-
-		go func(nowNumTask int) {
-			w,index := idleWorker(mr,callback)		//阻塞,等待可用worker
-
-			mr.stats[index] = 1
-
-			var taskArgs *DoTaskArgs
-			if phase == mapPhase{
-				taskArgs = &DoTaskArgs{
-					JobName : mr.jobName,
-					File : mr.files[nowNumTask],
-					Phase:mapPhase,
-					TaskNumber:nowNumTask,
-					NumOtherPhase:nios,
-				}
-			}else {
-				taskArgs = &DoTaskArgs{
-					JobName : mr.jobName,
-					Phase:reducePhase,
-					TaskNumber:nowNumTask,
-					NumOtherPhase:nios,
-				}
-			}
-
-			reply := new(struct{})
-
-			ok := call(w,"Worker.DoTask",taskArgs,reply)
-			if ok == false {
-				fmt.Println("do " + phase + " error")
-			}
-
-			mr.stats[index] = 0		//完成任务
-
-			select {
-			case callback.callbackChannel <- "done":
-			default :
-			}
-
-			workdone <- "work done"
-
-		}(i)
-
+		go doTask(i,faildone,workdone,phase,mr,nios,callback)
 	}
 
 	for i:=0 ; i < ntasks ; i++ {			//等待所有worker完成
+		fmt.Println("worker complete ", (i+1) )
 		<- workdone
 	}
 
@@ -95,6 +57,88 @@ func (mr *Master) schedule(phase jobPhase) {
  	//
 	fmt.Printf("Schedule: %v phase done\n", phase)
 }
+
+func handleFailTaskEvent(mr *Master,
+			faildone chan int,
+			workdone chan string,
+			phase jobPhase,
+			nios int,
+			callback *Callback,){
+	go func(){
+		for true {
+			failTaskIndex := <-faildone
+			go doTask(failTaskIndex,faildone,workdone,phase,mr,nios,callback)
+		}
+	}()
+
+}
+
+func doTask(taskIndex int,
+		faildone chan int,
+		workdone chan string,
+		phase jobPhase,
+		mr *Master,
+		nios int,
+		callback *Callback, ){
+
+	var taskArgs *DoTaskArgs
+	if phase == mapPhase{
+		taskArgs = &DoTaskArgs{
+			JobName : mr.jobName,
+			File : mr.files[taskIndex],
+			Phase:mapPhase,
+			TaskNumber:taskIndex,
+			NumOtherPhase:nios,
+		}
+	}else {
+		taskArgs = &DoTaskArgs{
+			JobName : mr.jobName,
+			Phase:reducePhase,
+			TaskNumber:taskIndex,
+			NumOtherPhase:nios,
+		}
+	}
+
+	ok,worker := callWorkerDoTask(mr,taskArgs,callback)
+	if(ok){
+		workdone <- "work done"
+	} else {
+		go func(){
+			for i,v := range mr.workers  {
+				if worker == v {
+					mr.stats[i] = 2
+				}
+			}
+
+			faildone <- taskIndex
+		}()
+		fmt.Println("do " + taskArgs.Phase + " error, put to failFiles , task index ",taskArgs.TaskNumber," workers : ",mr.workers, mr.stats)
+	}
+
+
+}
+
+func callWorkerDoTask(mr *Master,
+		taskArgs *DoTaskArgs,
+		callback *Callback)(bool,string){
+
+	w,index := idleWorker(mr,callback)		//阻塞,等待可用worker
+
+	reply := new(struct{})
+
+	ok := call(w,"Worker.DoTask",taskArgs,reply)
+
+	mr.stats[index] = 0		//完成任务
+
+	select {
+	case callback.callbackChannel <- "done":
+	default :
+	}
+
+	return ok,w
+}
+
+
 
 /**
 	获取空闲的worker
@@ -117,6 +161,7 @@ func idleWorker(mr *Master,callback *Callback) (idleWorker string,index int){
 		}
 
 	}
+
 	//fmt.Printf("after getidle worker : %s stats %d\n:",mr.workers, mr.stats)
 	return idleWorker,index
 }
@@ -128,19 +173,21 @@ func getIdleWorker(mr *Master)(idleWorker string,index int){
 	mr.Lock()
 	defer mr.Unlock()
 	for i,_ := range mr.stats {
-		if(mr.stats[i] != 1 ){					//有可用的worker
+		if(mr.stats[i] == 0 ){					//有可用的worker
 			idleWorker = mr.workers[i]
 			index = i
 		}
 	}
+	if idleWorker != "" {
+		mr.stats[index] = 1
+	}
+
 	return
 }
 
-
-
 /**
 	handle 注册事件
-		1.添加到状态队列
+		1.将注册的worker添加到状态队列
 		2.通知事件callback
 
  */
